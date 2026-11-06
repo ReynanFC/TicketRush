@@ -22,4 +22,8 @@ class Lot (
     fun isOnSaleAt(moment: Instant): Boolean {
         return !moment.isBefore(startsAt) && moment.isBefore(endsAt)
     }
+
+    fun overlaps(other: Lot): Boolean {
+        return startsAt.isBefore(other.endsAt) && other.startsAt.isBefore(endsAt)
+    }
 }

@@ -66,6 +66,33 @@ class LotTest {
     }
 
     @Nested
+    inner class Overlaps {
+
+        private val lot = aLot(startsAt = LOT_STARTS_AT, endsAt = LOT_ENDS_AT)
+
+        @Test
+        fun `should not overlap a lot that starts exactly when it ends`() {
+            val next = aLot(startsAt = LOT_ENDS_AT, endsAt = LOT_ENDS_AT.plus(Duration.ofDays(10)))
+
+            assertFalse(lot.overlaps(next))
+        }
+
+        @Test
+        fun `should overlap a lot entirely inside its window`() {
+            val inside = aLot(startsAt = LOT_STARTS_AT.plus(Duration.ofDays(1)), endsAt = LOT_ENDS_AT.minus(Duration.ofDays(1)))
+
+            assertTrue(lot.overlaps(inside))
+        }
+
+        @Test
+        fun `should be symmetric`() {
+            val partial = aLot(startsAt = LOT_ENDS_AT.minusSeconds(1), endsAt = LOT_ENDS_AT.plus(Duration.ofDays(10)))
+
+            assertEquals(lot.overlaps(partial), partial.overlaps(lot))
+        }
+    }
+
+    @Nested
     inner class Creation {
 
         @Test
