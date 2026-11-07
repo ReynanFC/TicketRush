@@ -1,5 +1,7 @@
 package com.reynanfc.ticketrush.catalog.domain
 
+import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateLotSortOrderException
+import com.reynanfc.ticketrush.catalog.domain.exception.OverlappingLotWindowException
 import java.util.UUID
 
 class Sector(

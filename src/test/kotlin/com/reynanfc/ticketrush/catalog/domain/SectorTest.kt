@@ -4,6 +4,8 @@ import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_ENDS_AT
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_STARTS_AT
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.aLot
 import com.reynanfc.ticketrush.catalog.fixtures.SectorFixtures.aSector
+import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateLotSortOrderException
+import com.reynanfc.ticketrush.catalog.domain.exception.OverlappingLotWindowException
 import org.junit.jupiter.api.Nested
 import java.time.Duration
 import kotlin.test.Test
