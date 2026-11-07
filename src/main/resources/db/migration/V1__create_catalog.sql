@@ -10,7 +10,7 @@ CREATE TABLE events (
     city         VARCHAR(100) NOT NULL,
     starts_at    TIMESTAMPTZ  NOT NULL,
     status       VARCHAR(20)  NOT NULL,
-    CONSTRAINT events_status_check CHECK (status IN ('RASCUNHO', 'PUBLICADO', 'ENCERRADO'))
+    CONSTRAINT events_status_check CHECK (status IN ('DRAFT', 'PUBLISHED', 'CLOSED'))
 );
 
 CREATE INDEX events_status_starts_at_idx ON events (status, starts_at);
