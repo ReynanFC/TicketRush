@@ -25,10 +25,9 @@ class AddSectorServiceTest {
         val event = anEvent().also { repository.save(it) }
 
         service.addSector(anAddSectorCommand(event.id))
-        val updatedEvent = repository.findById(event.id)!!
 
-        assertNotNull(repository.findById(event.id))
-        assertEquals(1, event.sectors.size)
+        val updatedEvent = assertNotNull(repository.findById(event.id))
+        assertEquals(1, updatedEvent.sectors.size)
         assertEquals("Pista", updatedEvent.sectors.first().name)
     }
 
@@ -60,7 +59,6 @@ class AddSectorServiceTest {
         }
         repository.save(event)
 
-        // A different name, so the failure can only come from the status.
         assertFailsWith<EventNotInDraftException> {
             service.addSector(anAddSectorCommand(event.id, name = "Camarote"))
         }
