@@ -15,6 +15,19 @@ class Sector(
         require(name.isNotBlank()) { "Name cannot be blank" }
     }
 
+    companion object {
+        // Rebuilds a sector that already exists in storage. Lot rules were checked when it was saved.
+        fun restore(
+            id: UUID,
+            name: String,
+            lots: List<Lot>,
+        ): Sector {
+            return Sector(id = id, name = name).apply {
+                _lots.addAll(lots)
+            }
+        }
+    }
+
     /**
      * Adds a lot to this sector after validating its constraints.
      *

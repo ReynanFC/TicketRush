@@ -32,6 +32,33 @@ class Event(
         require(city.isNotBlank()) { "City cannot be blank" }
     }
 
+    companion object {
+        // Rebuilds an event that already exists in storage, keeping its status.
+        // The constructor still runs the input validation; business rules were checked when it was saved.
+        fun restore(
+            id: UUID,
+            organizerId: UUID,
+            name: String,
+            venue: String,
+            city: String,
+            startsAt: Instant,
+            status: EventStatus,
+            sectors: List<Sector>,
+        ): Event {
+            return Event(
+                id = id,
+                organizerId = organizerId,
+                name = name,
+                venue = venue,
+                city = city,
+                startsAt = startsAt,
+            ).apply {
+                this.status = status
+                _sectors.addAll(sectors)
+            }
+        }
+    }
+
     /**
      * @throws EventNotInDraftException if the event is not DRAFT
      * @throws DuplicateSectorNameException if the name is already in use

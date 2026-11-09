@@ -1,13 +1,14 @@
 package com.reynanfc.ticketrush.catalog.domain.model
 
+import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateLotSortOrderException
+import com.reynanfc.ticketrush.catalog.domain.exception.OverlappingLotWindowException
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_ENDS_AT
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_STARTS_AT
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.aLot
 import com.reynanfc.ticketrush.catalog.fixtures.SectorFixtures.aSector
-import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateLotSortOrderException
-import com.reynanfc.ticketrush.catalog.domain.exception.OverlappingLotWindowException
 import org.junit.jupiter.api.Nested
 import java.time.Duration
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -27,6 +28,32 @@ class SectorTest {
             val sector = aSector()
 
             assertEquals(emptyList(), sector.lots)
+        }
+    }
+
+    @Nested
+    inner class Restore {
+
+        @Test
+        fun `should restore a sector with its id and lots`() {
+            val id = UUID.randomUUID()
+            val lots = listOf(aLot(sortOrder = 1))
+
+            val sector = Sector.restore(id = id, name = "Pista", lots = lots)
+
+            assertEquals(id, sector.id)
+            assertEquals("Pista", sector.name)
+            assertEquals(lots, sector.lots)
+        }
+
+        @Test
+        fun `should not share the given list`() {
+            val lots = mutableListOf(aLot(sortOrder = 1))
+            val sector = Sector.restore(id = UUID.randomUUID(), name = "Pista", lots = lots)
+
+            lots.add(aLot(sortOrder = 2, startsAt = LOT_ENDS_AT, endsAt = LOT_ENDS_AT.plusSeconds(3600)))
+
+            assertEquals(1, sector.lots.size)
         }
     }
 

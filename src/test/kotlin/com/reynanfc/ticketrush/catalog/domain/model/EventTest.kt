@@ -7,6 +7,8 @@ import com.reynanfc.ticketrush.catalog.domain.exception.EventHasNoSectorsExcepti
 import com.reynanfc.ticketrush.catalog.domain.exception.EventNotInDraftException
 import com.reynanfc.ticketrush.catalog.domain.exception.SectorHasNoLotsException
 import com.reynanfc.ticketrush.catalog.domain.exception.SectorNotFoundException
+import com.reynanfc.ticketrush.catalog.fixtures.EventFixtures.EVENT_STARTS_AT
+import com.reynanfc.ticketrush.catalog.fixtures.EventFixtures.ORGANIZER_ID
 import com.reynanfc.ticketrush.catalog.fixtures.EventFixtures.anEvent
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_ENDS_AT
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.aLot
@@ -43,6 +45,62 @@ class EventTest {
 
             assertEquals(EventStatus.DRAFT, event.status)
             assertEquals(emptyList(), event.sectors)
+        }
+    }
+
+    @Nested
+    inner class Restore {
+
+        private fun aRestoredEvent(status: EventStatus, sectors: List<Sector>) = Event.restore(
+            id = UUID.randomUUID(),
+            organizerId = ORGANIZER_ID,
+            name = "Festival de Verão",
+            venue = "Arena Central",
+            city = "Salvador",
+            startsAt = EVENT_STARTS_AT,
+            status = status,
+            sectors = sectors,
+        )
+
+        @Test
+        fun `should restore a published event with its sectors`() {
+            val sector = aSector(name = "Pista", lots = listOf(aLot()))
+
+            val event = aRestoredEvent(EventStatus.PUBLISHED, listOf(sector))
+
+            assertEquals(EventStatus.PUBLISHED, event.status)
+            assertEquals(listOf(sector), event.sectors)
+        }
+
+        @Test
+        fun `should keep a restored published event protected`() {
+            val event = aRestoredEvent(EventStatus.PUBLISHED, listOf(aSector(name = "Pista", lots = listOf(aLot()))))
+
+            assertFailsWith<EventNotInDraftException> { event.addSector(aSector(name = "Camarote")) }
+            assertFailsWith<EventNotInDraftException> { event.publish() }
+        }
+
+        @Test
+        fun `should keep the rules of a restored draft event`() {
+            val event = aRestoredEvent(EventStatus.DRAFT, listOf(aSector(name = "Pista")))
+
+            assertFailsWith<DuplicateSectorNameException> { event.addSector(aSector(name = "Pista")) }
+        }
+
+        @Test
+        fun `should still validate the input`() {
+            assertFailsWith<IllegalArgumentException> {
+                Event.restore(
+                    id = UUID.randomUUID(),
+                    organizerId = ORGANIZER_ID,
+                    name = "  ",
+                    venue = "Arena Central",
+                    city = "Salvador",
+                    startsAt = EVENT_STARTS_AT,
+                    status = EventStatus.DRAFT,
+                    sectors = emptyList(),
+                )
+            }
         }
     }
 
