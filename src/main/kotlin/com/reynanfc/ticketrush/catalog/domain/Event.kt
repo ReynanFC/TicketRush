@@ -49,21 +49,20 @@ class Event(
      * @throws SectorHasNoLotsException if any sector has no lots
      */
     fun publish() {
-
         ensureDraft()
 
         if (sectors.isEmpty()) {
             throw EventHasNoSectorsException(id)
         }
 
-        sectors.firstOrNull() { it.lots.isEmpty() }?.let {
-            sector -> throw SectorHasNoLotsException(sector.id, sector.name)
+        sectors.firstOrNull { it.lots.isEmpty() }?.let { sector ->
+            throw SectorHasNoLotsException(sector.id, sector.name)
         }
 
         status = EventStatus.PUBLISHED
     }
 
-    fun ensureDraft() {
+    private fun ensureDraft() {
         if (status != EventStatus.DRAFT) {
             throw EventNotInDraftException(id, status)
         }

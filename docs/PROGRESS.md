@@ -24,10 +24,10 @@ Decisões tomadas:
 
 ## Pendências de revisão no `Event.kt` (pequenas)
 
-- [ ] `ensureDraft()` está público → deve ser `private`.
-- [ ] `firstOrNull() { ... }` → tirar os `()`.
-- [ ] Linha em branco sobrando no começo de `publish()`.
-- [ ] `?.let {` + `sector ->` na linha de baixo → convenção é `?.let { sector ->` na mesma linha.
+- [x] `ensureDraft()` está público → deve ser `private`.
+- [x] `firstOrNull() { ... }` → tirar os `()`.
+- [x] Linha em branco sobrando no começo de `publish()`.
+- [x] `?.let {` + `sector ->` na linha de baixo → convenção é `?.let { sector ->` na mesma linha.
 
 Commit sugerido: `refactor(catalog): tidy up Event`.
 
