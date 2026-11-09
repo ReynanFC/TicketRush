@@ -1,8 +1,8 @@
 package com.reynanfc.ticketrush.catalog.application.service
 
 import com.reynanfc.ticketrush.catalog.domain.enums.EventStatus
+import com.reynanfc.ticketrush.catalog.fakes.InMemoryEventRepository
 import com.reynanfc.ticketrush.catalog.fixtures.CreateEventCommandFixtures.aCreateEventCommand
-import com.reynanfc.ticketrush.catalog.fixtures.InMemoryEventRepository
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import kotlin.test.Test

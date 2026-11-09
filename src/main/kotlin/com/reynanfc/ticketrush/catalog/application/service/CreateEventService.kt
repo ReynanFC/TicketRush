@@ -1,7 +1,7 @@
 package com.reynanfc.ticketrush.catalog.application.service
 
-import com.reynanfc.ticketrush.catalog.application.port.`in`.CreateEventCommand
-import com.reynanfc.ticketrush.catalog.application.port.`in`.CreateEventUseCase
+import com.reynanfc.ticketrush.catalog.application.port.`in`.command.CreateEventCommand
+import com.reynanfc.ticketrush.catalog.application.port.`in`.usecase.CreateEventUseCase
 import com.reynanfc.ticketrush.catalog.application.port.out.EventRepository
 import com.reynanfc.ticketrush.catalog.domain.model.Event
 

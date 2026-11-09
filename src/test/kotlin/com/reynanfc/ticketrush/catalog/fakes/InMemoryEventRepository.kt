@@ -1,4 +1,4 @@
-package com.reynanfc.ticketrush.catalog.fixtures
+package com.reynanfc.ticketrush.catalog.fakes
 
 import com.reynanfc.ticketrush.catalog.application.port.out.EventRepository
 import com.reynanfc.ticketrush.catalog.domain.model.Event

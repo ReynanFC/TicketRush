@@ -1,4 +1,4 @@
-package com.reynanfc.ticketrush.catalog.application.port.`in`
+package com.reynanfc.ticketrush.catalog.application.port.`in`.command
 
 import java.time.Instant
 import java.util.UUID
