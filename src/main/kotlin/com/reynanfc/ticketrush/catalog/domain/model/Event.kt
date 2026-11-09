@@ -1,10 +1,13 @@
 package com.reynanfc.ticketrush.catalog.domain.model
 
 import com.reynanfc.ticketrush.catalog.domain.enums.EventStatus
+import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateLotSortOrderException
 import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateSectorNameException
-import com.reynanfc.ticketrush.catalog.domain.exception.EventNotInDraftException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventHasNoSectorsException
+import com.reynanfc.ticketrush.catalog.domain.exception.EventNotInDraftException
+import com.reynanfc.ticketrush.catalog.domain.exception.OverlappingLotWindowException
 import com.reynanfc.ticketrush.catalog.domain.exception.SectorHasNoLotsException
+import com.reynanfc.ticketrush.catalog.domain.exception.SectorNotFoundException
 import java.time.Instant
 import java.util.UUID
 
@@ -60,6 +63,24 @@ class Event(
         }
 
         status = EventStatus.PUBLISHED
+    }
+
+    /**
+     * Adds a lot to one of the event's sectors. Lots go through the aggregate root,
+     * so the DRAFT rule applies to them too.
+     *
+     * @throws EventNotInDraftException if the event is not DRAFT
+     * @throws SectorNotFoundException if the sector is not part of this event
+     * @throws DuplicateLotSortOrderException if the sort order is already in use in the sector
+     * @throws OverlappingLotWindowException if the lot's window overlaps another lot in the sector
+     */
+    fun addLot(sectorId: UUID, lot: Lot) {
+        ensureDraft()
+
+        val sector = sectors.firstOrNull { it.id == sectorId }
+            ?: throw SectorNotFoundException(sectorId)
+
+        sector.addLot(lot)
     }
 
     private fun ensureDraft() {

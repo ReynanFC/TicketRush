@@ -25,7 +25,7 @@ class Sector(
      * @throws DuplicateLotSortOrderException if the sort order is already in use
      * @throws OverlappingLotWindowException if the lot's time window overlaps with an existing lot
      */
-    fun addLot(lot: Lot) {
+    internal fun addLot(lot: Lot) {
         if (lots.any { it.sortOrder == lot.sortOrder }) {
             throw DuplicateLotSortOrderException(lot.sortOrder)
         }

@@ -1,14 +1,18 @@
 package com.reynanfc.ticketrush.catalog.domain.model
 
 import com.reynanfc.ticketrush.catalog.domain.enums.EventStatus
+import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateLotSortOrderException
 import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateSectorNameException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventHasNoSectorsException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventNotInDraftException
 import com.reynanfc.ticketrush.catalog.domain.exception.SectorHasNoLotsException
+import com.reynanfc.ticketrush.catalog.domain.exception.SectorNotFoundException
 import com.reynanfc.ticketrush.catalog.fixtures.EventFixtures.anEvent
+import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_ENDS_AT
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.aLot
 import com.reynanfc.ticketrush.catalog.fixtures.SectorFixtures.aSector
 import org.junit.jupiter.api.Nested
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -78,6 +82,62 @@ class EventTest {
             }
 
             assertEquals(EventStatus.PUBLISHED, error.status)
+        }
+    }
+
+    @Nested
+    inner class AddLot {
+
+        @Test
+        fun `should add the lot to the given sector`() {
+            val event = anEvent()
+            val pista = aSector(name = "Pista")
+            val camarote = aSector(name = "Camarote")
+            event.addSector(pista)
+            event.addSector(camarote)
+            val lot = aLot()
+
+            event.addLot(camarote.id, lot)
+
+            assertEquals(listOf(lot), camarote.lots)
+            assertEquals(emptyList(), pista.lots)
+        }
+
+        @Test
+        fun `should reject a lot for a sector that is not in the event`() {
+            val event = anEvent()
+            event.addSector(aSector(name = "Pista"))
+            val missingSectorId = UUID.randomUUID()
+
+            val error = assertFailsWith<SectorNotFoundException> {
+                event.addLot(missingSectorId, aLot())
+            }
+
+            assertEquals(missingSectorId, error.sectorId)
+        }
+
+        @Test
+        fun `should reject a lot after the event is published`() {
+            val event = anEvent()
+            val sector = aSector(name = "Pista", lots = listOf(aLot(sortOrder = 1)))
+            event.addSector(sector)
+            event.publish()
+
+            assertFailsWith<EventNotInDraftException> {
+                event.addLot(sector.id, aLot(sortOrder = 2, startsAt = LOT_ENDS_AT, endsAt = LOT_ENDS_AT.plusSeconds(3600)))
+            }
+            assertEquals(1, sector.lots.size)
+        }
+
+        @Test
+        fun `should keep the sector rules when adding through the event`() {
+            val event = anEvent()
+            val sector = aSector(name = "Pista", lots = listOf(aLot(sortOrder = 1)))
+            event.addSector(sector)
+
+            assertFailsWith<DuplicateLotSortOrderException> {
+                event.addLot(sector.id, aLot(sortOrder = 1))
+            }
         }
     }
 
