@@ -1,4 +1,4 @@
-package com.reynanfc.ticketrush.catalog.domain
+package com.reynanfc.ticketrush.catalog.domain.model
 
 import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateLotSortOrderException
 import com.reynanfc.ticketrush.catalog.domain.exception.OverlappingLotWindowException

@@ -1,6 +1,6 @@
 package com.reynanfc.ticketrush.catalog.fixtures
 
-import com.reynanfc.ticketrush.catalog.domain.Lot
+import com.reynanfc.ticketrush.catalog.domain.model.Lot
 import java.time.Instant
 
 // Fake data for tests: valid by default; each test overrides only what matters.

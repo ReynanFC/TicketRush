@@ -1,6 +1,6 @@
 package com.reynanfc.ticketrush.catalog.domain.exception
 
-import com.reynanfc.ticketrush.catalog.domain.Lot
+import com.reynanfc.ticketrush.catalog.domain.model.Lot
 import java.util.UUID
 
 class OverlappingLotWindowException(

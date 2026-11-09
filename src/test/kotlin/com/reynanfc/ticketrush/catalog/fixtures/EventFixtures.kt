@@ -1,6 +1,6 @@
 package com.reynanfc.ticketrush.catalog.fixtures
 
-import com.reynanfc.ticketrush.catalog.domain.Event
+import com.reynanfc.ticketrush.catalog.domain.model.Event
 import java.time.Instant
 import java.util.UUID
 

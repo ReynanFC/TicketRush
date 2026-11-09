@@ -1,6 +1,6 @@
 package com.reynanfc.ticketrush.catalog.domain.exception
 
-import com.reynanfc.ticketrush.catalog.domain.EventStatus
+import com.reynanfc.ticketrush.catalog.domain.enums.EventStatus
 import java.util.UUID
 
 class EventNotInDraftException(

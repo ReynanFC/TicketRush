@@ -1,4 +1,4 @@
-package com.reynanfc.ticketrush.catalog.domain
+package com.reynanfc.ticketrush.catalog.domain.model
 
 import java.time.Instant
 import java.util.UUID

@@ -1,4 +1,4 @@
-package com.reynanfc.ticketrush.catalog.domain
+package com.reynanfc.ticketrush.catalog.domain.model
 
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_ENDS_AT
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_STARTS_AT

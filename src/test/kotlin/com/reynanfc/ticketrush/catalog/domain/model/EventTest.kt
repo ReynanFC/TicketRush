@@ -1,5 +1,6 @@
-package com.reynanfc.ticketrush.catalog.domain
+package com.reynanfc.ticketrush.catalog.domain.model
 
+import com.reynanfc.ticketrush.catalog.domain.enums.EventStatus
 import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateSectorNameException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventHasNoSectorsException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventNotInDraftException

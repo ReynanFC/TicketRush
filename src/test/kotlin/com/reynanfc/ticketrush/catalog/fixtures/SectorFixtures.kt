@@ -1,7 +1,7 @@
 package com.reynanfc.ticketrush.catalog.fixtures
 
-import com.reynanfc.ticketrush.catalog.domain.Lot
-import com.reynanfc.ticketrush.catalog.domain.Sector
+import com.reynanfc.ticketrush.catalog.domain.model.Lot
+import com.reynanfc.ticketrush.catalog.domain.model.Sector
 
 // Fake data for tests: an empty, valid sector by default.
 object SectorFixtures {
