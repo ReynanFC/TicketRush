@@ -1,6 +1,6 @@
 # Progresso — onde paramos
 
-> Atualizado em 2026-11-09. Branch: `feat/catalog`. Roadmap: **passo 2 — Catálogo em estilo hexagonal**.
+> Atualizado em 2026-11-10. Branch: `feat/catalog`. Roadmap: **passo 2 — Catálogo em estilo hexagonal**.
 
 ```
 Passo 2 – Catálogo
@@ -8,12 +8,14 @@ Passo 2 – Catálogo
  ✅ Porta de saída (EventRepository) + 4 casos de uso
  ✅ Adapter de persistência (JPA + Testcontainers)
  ✅ Ligação no Spring (@Configuration)
- ⬜ Adapter web (controller)        ← começar por aqui
+ ✅ Adapter web (controller, DTOs, mapper, exception handler, Swagger)
+ ✅ Logs nos services (SLF4J)
+ ⬜ Testes do adapter web (@WebMvcTest)   ← começar por aqui
  ⬜ ADR 0001
  ⬜ PR → main
 ```
 
-69 testes verdes (`./gradlew test`). Árvore limpa no último commit (`d8033b7`).
+69 testes verdes (`./gradlew test`). O adapter web ainda não tem teste próprio; foi verificado na mão com a app rodando (`./gradlew bootTestRun`).
 
 ## Feito
 
@@ -28,9 +30,16 @@ application/
   port/in/command/   CreateEventCommand, AddSectorCommand, AddLotCommand, PublishEventCommand
   port/in/usecase/   CreateEventUseCase, AddSectorUseCase, AddLotUseCase, PublishEventUseCase
   port/out/          EventRepository (save, findById)
-  service/           um *Service por caso de uso, recebendo EventRepository no construtor
+  service/           um *Service por caso de uso, recebendo EventRepository no construtor (com logs SLF4J)
 adapter/
-  in/web/            (vazio — próximo passo)
+  in/web/
+    EventController             implementa EventControllerDocs; DTO -> mapper -> use case -> mapper -> ResponseEntity
+    docs/            EventControllerDocs — anotações do Swagger (springdoc), fora do controller
+    dto/request/     *RequestDTO com Bean Validation (@field:...) e @Schema
+    dto/response/    *ResponseDTO (status é String, não o enum do domínio)
+    dto/error/       ErrorResponseDTO, ValidationErrorResponseDTO (+ FieldErrorDTO)
+    exception/       CatalogExceptionHandler (@RestControllerAdvice)
+    mapper/          EventWebMapper — toCommand (request -> command) e toResponse (domínio -> response)
   out/persistence/
     entity/          EventEntity, SectorEntity, LotEntity (@OneToMany unidirecional + @JoinColumn)
     mapper/          EventPersistenceMapper — domínio ↔ entity (volta usa restore)
@@ -39,6 +48,19 @@ adapter/
 config/
   CatalogConfiguration          @Bean de cada use case (devolve a interface)
 ```
+
+Fora do `catalog/`: `config/OpenApiConfiguration` (título e convenções da API no Swagger UI, `/swagger-ui.html`).
+
+### API
+
+| Método | Rota | Sucesso | Erros |
+|---|---|---|---|
+| `POST` | `/events` | 201 + `Location` | 400 |
+| `POST` | `/events/{eventId}/sectors` | 201 + `Location` | 400, 404, 422 |
+| `POST` | `/events/{eventId}/sectors/{sectorId}/lots` | 201 + `Location` | 400, 404, 422 |
+| `POST` | `/events/{eventId}/publish` | 200 | 404, 422 |
+
+Erros no `CatalogExceptionHandler`: `CatalogException` -> `when` exaustivo (404 not found, 422 o resto); `@Valid`, JSON ilegível e UUID inválido na URL -> 400 com `fieldErrors`; `IllegalArgumentException` (require do domínio) -> 400; erros do Spring (405, 415) mantêm o status; resto -> 500 com stack trace só no log.
 
 Testes: `domain/model/` (domínio), `application/service/` (casos de uso com fake), `adapter/out/persistence/JpaEventRepositoryTest` (Postgres real, sem transação de teste), `TicketRushApplicationTests` (fluxo completo via Spring), `fakes/InMemoryEventRepository`, `fixtures/`.
 
@@ -61,28 +83,27 @@ Testes: `domain/model/` (domínio), `application/service/` (casos de uso com fak
 - Services **sem `@Service`**: ligados via `CatalogConfiguration`, fora do core.
 - Core (`domain` + `application`) não importa nada de `org.springframework`.
 - A V1 foi editada porque ainda não chegou na `main`. Depois do merge, toda mudança vira V2.
+- DTOs com sufixo `DTO` (preferência do Reynan). Mapeamento fora do controller, em `EventWebMapper`.
+- Erros com DTO próprio (`ErrorResponseDTO`/`ValidationErrorResponseDTO`), não `ProblemDetail`.
+- `endsAt > startsAt` fica no domínio (`require` no `Lot`), não no DTO: regra entre campos, já garantida lá.
+- Logs: `DEBUG` na entrada do service, `INFO` depois do `save`; recusas logadas uma vez no handler (`WARN`), não com try/catch nos services. SLF4J no core é aceito (fachada, não framework).
 
 ## Próximos passos
 
-1. **Adapter web** (`adapter/in/web`).
-   - `EventController` recebendo os 4 use cases (interfaces) no construtor.
-   - Endpoints:
-     | Método | Rota | Use case |
-     |---|---|---|
-     | `POST` | `/events` | `CreateEventUseCase` |
-     | `POST` | `/events/{eventId}/sectors` | `AddSectorUseCase` |
-     | `POST` | `/events/{eventId}/sectors/{sectorId}/lots` | `AddLotUseCase` |
-     | `POST` | `/events/{eventId}/publish` | `PublishEventUseCase` |
-   - `dto/`: requests e responses. **DTO ≠ command**: ids vêm da URL, não do corpo; o controller traduz DTO → command.
-   - `CatalogExceptionHandler` (`@RestControllerAdvice`): `EventNotFoundException`/`SectorNotFoundException` → 404, demais `CatalogException` → 422, `IllegalArgumentException` → 400.
-   - Teste com `@WebMvcTest` e use cases mockados (sem banco).
+1. **Testes do adapter web** com `@WebMvcTest(EventController::class)` e os 4 use cases mockados (sem banco).
+   - Caminho feliz de cada rota: status, `Location` e corpo.
+   - `@Valid`: campo em branco, `startsAt` no passado -> 400 com `fieldErrors`.
+   - JSON sem campo obrigatório / UUID inválido na URL -> 400.
+   - Use case lançando `EventNotFoundException` -> 404 e `DuplicateSectorNameException` -> 422.
+   - O `@WebMvcTest` já carrega o `CatalogExceptionHandler` (é `@RestControllerAdvice`), então os testes de erro passam por ele.
 2. **ADR `docs/adr/0001-hexagonal-catalog.md`** — por que hexagonal no catálogo, comparando com o layered do Caraíva. Incluir a decisão do `restore`.
-3. **PR** `feat/catalog` → `main` com CI verde.
+3. **PR** `feat/catalog` -> `main` com CI verde.
 
 ## Pontos de atenção para depois
 
 - **Transação do caso de uso:** cada service faz `findById` e `save` em transações separadas (cada método do adapter tem a sua). Dois usuários editando o mesmo evento ao mesmo tempo podem sobrescrever um ao outro. Resolver no passo 3 (concorrência): `@Transactional` no use case e/ou versionamento otimista (`@Version`).
 - **ID atribuído + Spring Data:** `save` faz `SELECT` antes do `INSERT` (merge). Otimizável com `Persistable` se virar problema.
+- **Handler global:** `CatalogExceptionHandler` vale para todos os controllers. Quando surgirem outros módulos, mover validação/JSON/500 para um handler compartilhado.
 - **`TicketRushApplicationTests`** grava no banco e não limpa. Ok por enquanto (ids novos a cada execução).
 - **Fake guarda a mesma instância:** testes de service podem passar sem `save`; quem pega isso é o teste de persistência / ponta a ponta.
 
