@@ -10,12 +10,14 @@ Passo 2 – Catálogo
  ✅ Ligação no Spring (@Configuration)
  ✅ Adapter web (controller, DTOs, mapper, exception handler, Swagger)
  ✅ Logs nos services (SLF4J)
- ⬜ Testes do adapter web (@WebMvcTest)   ← começar por aqui
+ ✅ Testes do adapter web (@WebMvcTest)
+ ✅ Virtual threads + Java 25 (ADR 0002, PR #2 aberto contra a main)
+ ⬜ Branch develop + pipeline só de testes   ← começar por aqui
  ⬜ ADR 0001
- ⬜ PR → main
+ ⬜ PR feat/catalog → develop
 ```
 
-69 testes verdes (`./gradlew test`). O adapter web ainda não tem teste próprio; foi verificado na mão com a app rodando (`./gradlew bootTestRun`).
+87 testes verdes (`./gradlew test`). A `feat/catalog` já tem o merge local da `chore/virtual-threads-java-25` e ainda não foi enviada ao GitHub.
 
 ## Feito
 
@@ -62,7 +64,7 @@ Fora do `catalog/`: `config/OpenApiConfiguration` (título e convenções da API
 
 Erros no `CatalogExceptionHandler`: `CatalogException` -> `when` exaustivo (404 not found, 422 o resto); `@Valid`, JSON ilegível e UUID inválido na URL -> 400 com `fieldErrors`; `IllegalArgumentException` (require do domínio) -> 400; erros do Spring (405, 415) mantêm o status; resto -> 500 com stack trace só no log.
 
-Testes: `domain/model/` (domínio), `application/service/` (casos de uso com fake), `adapter/out/persistence/JpaEventRepositoryTest` (Postgres real, sem transação de teste), `TicketRushApplicationTests` (fluxo completo via Spring), `fakes/InMemoryEventRepository`, `fixtures/`.
+Testes: `domain/model/` (domínio), `application/service/` (casos de uso com fake), `adapter/out/persistence/JpaEventRepositoryTest` (Postgres real, sem transação de teste), `adapter/in/web/EventControllerTest` (`@WebMvcTest`, use cases mockados: status, `Location`, corpo e tradução de erros; fixtures dos requests em `fixtures/web/`), `TicketRushApplicationTests` (fluxo completo via Spring), `fakes/InMemoryEventRepository`, `fixtures/`.
 
 ### Regras do domínio
 
@@ -87,17 +89,19 @@ Testes: `domain/model/` (domínio), `application/service/` (casos de uso com fak
 - Erros com DTO próprio (`ErrorResponseDTO`/`ValidationErrorResponseDTO`), não `ProblemDetail`.
 - `endsAt > startsAt` fica no domínio (`require` no `Lot`), não no DTO: regra entre campos, já garantida lá.
 - Logs: `DEBUG` na entrada do service, `INFO` depois do `save`; recusas logadas uma vez no handler (`WARN`), não com try/catch nos services. SLF4J no core é aceito (fachada, não framework).
+- Testes do controller mockam os use cases e forçam as exceções com `willThrow`: testam só a tradução para HTTP. A regra em si é testada no domínio (ex.: overlap no `SectorTest`); o fluxo ponta a ponta fica para um teste de integração.
+- **Virtual threads, não coroutines** (ADR 0002): JDBC é bloqueante, então `suspend` não traria ganho. Java 25 para evitar *pinning* em `synchronized`. Pool do Hikari fica em 10 até medir no passo 3.
+- **Fluxo de branches:** `feat/...` / `chore/...` → PR para a `develop` (pipeline só de testes) → `main` só quando o passo estiver pronto.
 
 ## Próximos passos
 
-1. **Testes do adapter web** com `@WebMvcTest(EventController::class)` e os 4 use cases mockados (sem banco).
-   - Caminho feliz de cada rota: status, `Location` e corpo.
-   - `@Valid`: campo em branco, `startsAt` no passado -> 400 com `fieldErrors`.
-   - JSON sem campo obrigatório / UUID inválido na URL -> 400.
-   - Use case lançando `EventNotFoundException` -> 404 e `DuplicateSectorNameException` -> 422.
-   - O `@WebMvcTest` já carrega o `CatalogExceptionHandler` (é `@RestControllerAdvice`), então os testes de erro passam por ele.
+1. **Branch `develop` + pipeline só de testes.**
+   - Publicar a `develop` no GitHub (hoje ela só existe localmente, igual à `main`).
+   - Workflow que roda `./gradlew test` em PR e push para a `develop`. O workflow atual (`ci.yml`, `./gradlew build`) continua para a `main`.
+   - Proteger a `develop` com o check de testes obrigatório.
+   - Trocar a base do PR #2 (`chore/virtual-threads-java-25`) de `main` para `develop`.
 2. **ADR `docs/adr/0001-hexagonal-catalog.md`** — por que hexagonal no catálogo, comparando com o layered do Caraíva. Incluir a decisão do `restore`.
-3. **PR** `feat/catalog` -> `main` com CI verde.
+3. **PR** `feat/catalog` -> `develop` com os testes verdes. Para a `main` só quando o passo 2 estiver fechado.
 
 ## Pontos de atenção para depois
 
@@ -127,3 +131,11 @@ Sessão de 2026-11-09:
 - `@Configuration` + `@Bean` para ligar o core no Spring sem anotar o core.
 - Kotlin: Elvis `?:` com `throw`, `internal`, function reference (`::toDomain`).
 - Git: cada commit deve compilar sozinho. TDD com `TODO()` (vermelho → verde).
+
+Sessão de 2026-11-10:
+- `@WebMvcTest`: slice só da web, use cases como `@MockitoBean`. `given(...).willReturn` / `willThrow`, `verifyNoInteractions`.
+- A nulidade do Kotlin vale em compilação: JSON sem campo obrigatório falha no Jackson (antes do `@Valid`), e um mock do Mockito pode devolver `null` num tipo não nulo quando o stub não casa (`equals` do command).
+- `jsonPath` compara tipos: `UUID`/`Instant` precisam de `toString()`. `doesNotExist()` passa com campo ausente ou `null`.
+- Cada camada de teste responde uma pergunta: domínio (regra), service (orquestração), controller (tradução HTTP), integração (tudo junto).
+- Virtual threads × coroutines, *pinning*, pool de conexões (HikariCP) e por que pool maior não é mais rápido.
+- Concorrência: coroutines/threads **geram** concorrência (testes); o banco (locks, update condicional) **protege** a regra.
