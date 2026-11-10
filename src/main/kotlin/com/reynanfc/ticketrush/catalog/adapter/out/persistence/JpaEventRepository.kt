@@ -1,11 +1,13 @@
 package com.reynanfc.ticketrush.catalog.adapter.out.persistence
 
+import com.reynanfc.ticketrush.catalog.adapter.out.persistence.mapper.EventPersistenceMapper
+import com.reynanfc.ticketrush.catalog.adapter.out.persistence.repository.SpringDataEventRepository
 import com.reynanfc.ticketrush.catalog.application.port.out.EventRepository
 import com.reynanfc.ticketrush.catalog.domain.model.Event
+import java.util.UUID
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import java.util.UUID
 
 // Output adapter: implements the core's EventRepository port with JPA.
 @Repository

@@ -1,4 +1,4 @@
-package com.reynanfc.ticketrush.catalog.adapter.out.persistence
+package com.reynanfc.ticketrush.catalog.adapter.out.persistence.mapper
 
 import com.reynanfc.ticketrush.catalog.adapter.out.persistence.entity.EventEntity
 import com.reynanfc.ticketrush.catalog.adapter.out.persistence.entity.LotEntity

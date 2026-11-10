@@ -1,4 +1,4 @@
-package com.reynanfc.ticketrush.catalog.adapter.out.persistence
+package com.reynanfc.ticketrush.catalog.adapter.out.persistence.repository
 
 import com.reynanfc.ticketrush.catalog.adapter.out.persistence.entity.EventEntity
 import org.springframework.data.jpa.repository.JpaRepository

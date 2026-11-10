@@ -1,6 +1,7 @@
 package com.reynanfc.ticketrush.catalog.adapter.out.persistence
 
 import com.reynanfc.ticketrush.TestcontainersConfiguration
+import com.reynanfc.ticketrush.catalog.adapter.out.persistence.repository.SpringDataEventRepository
 import com.reynanfc.ticketrush.catalog.domain.enums.EventStatus
 import com.reynanfc.ticketrush.catalog.fixtures.EventFixtures.anEvent
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_ENDS_AT

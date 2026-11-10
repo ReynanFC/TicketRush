@@ -33,9 +33,9 @@ adapter/
   in/web/            (vazio — próximo passo)
   out/persistence/
     entity/          EventEntity, SectorEntity, LotEntity (@OneToMany unidirecional + @JoinColumn)
-    EventPersistenceMapper      domínio ↔ entity (volta usa restore)
-    SpringDataEventRepository   JpaRepository<EventEntity, UUID>, interno ao adapter
-    JpaEventRepository          @Repository, implementa a porta EventRepository
+    mapper/          EventPersistenceMapper — domínio ↔ entity (volta usa restore)
+    repository/      SpringDataEventRepository — JpaRepository<EventEntity, UUID>, interno ao adapter
+    JpaEventRepository          @Repository, implementa a porta EventRepository (o adapter em si)
 config/
   CatalogConfiguration          @Bean de cada use case (devolve a interface)
 ```
