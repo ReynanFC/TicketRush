@@ -25,9 +25,9 @@ Kotlin on the backend, Gradle, hexagonal architecture (he doesn't understand it 
 
 ## Roadmap
 
-1. **Setup** (current): Spring Boot monolith with Gradle Kotlin DSL, Postgres in Docker Compose, Flyway, an integration test with Testcontainers, CI on GitHub Actions, protected `main`.
-2. Catalog (events, sectors, lots) in hexagonal style, compared with the layered style of Caraíva.
-3. Reservation with stock and a concurrency test (never sell more than the stock).
+1. **Setup** (done): Spring Boot monolith with Gradle Kotlin DSL, Postgres in Docker Compose, Flyway, an integration test with Testcontainers, CI on GitHub Actions, protected `main`.
+2. Catalog (done): events, sectors and lots in hexagonal style, compared with the layered style of Caraíva.
+3. **Reservation** (current): stock and a concurrency test (never sell more than the stock).
 4. Order as a state machine, with a 10-minute expiration.
 5. Spring events → outbox → RabbitMQ, still inside the monolith.
 6. Extract the microservices following MODELAGEM.md.
@@ -38,5 +38,7 @@ Kotlin on the backend, Gradle, hexagonal architecture (he doesn't understand it 
 - All work happens in branches (`feat/...`, `chore/...`, `fix/...`) and lands in `develop` through a PR with green tests (a pipeline that runs only the tests).
 - `main` is protected and only receives `develop` when a roadmap step is ready.
 - Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`).
+- Tasks are GitHub issues: one milestone per roadmap step, label `tech-debt` for things to revisit, PRs close issues with `Closes #N`. At session start, check `gh issue list` for the current milestone.
+- Learning notes (decisions and concepts per step) live in `docs/LEARNING.md`.
 - Architecture decisions become ADRs in `docs/adr/NNNN-title.md`.
 - Money always in cents (`Long`), timestamps in UTC.

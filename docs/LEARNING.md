@@ -1,24 +1,11 @@
-# Progresso — onde paramos
+# Caderno de estudo
 
-> Atualizado em 2026-11-10. Branch: `feat/catalog`. Roadmap: **passo 2 — Catálogo em estilo hexagonal**.
+> O que fazer está nas **issues** do GitHub, agrupadas por milestone (um por passo do roadmap):
+> `gh issue list --milestone "Passo 3 — Reserva"`. Pontos de atenção têm a label `tech-debt`.
+>
+> Este arquivo guarda o que não "fecha": estrutura, decisões tomadas e conceitos aprendidos. Decisões grandes viram ADR em `docs/adr/`.
 
-```
-Passo 2 – Catálogo
- ✅ Domínio (Event, Sector, Lot)
- ✅ Porta de saída (EventRepository) + 4 casos de uso
- ✅ Adapter de persistência (JPA + Testcontainers)
- ✅ Ligação no Spring (@Configuration)
- ✅ Adapter web (controller, DTOs, mapper, exception handler, Swagger)
- ✅ Logs nos services (SLF4J)
- ✅ Testes do adapter web (@WebMvcTest)
- ✅ Virtual threads + Java 25 (ADR 0002, PR #2 → develop)
- ✅ Branch develop + pipeline só de testes (tests.yml)
- ✅ ADR 0001 (hexagonal no catálogo)
- ⬜ PR #3 feat/catalog → develop   ← começar por aqui
- ⬜ develop → main (fecha o passo 2)
-```
-
-87 testes verdes (`./gradlew test`). PR #3 aberto contra a `develop`.
+# Passo 2 — Catálogo
 
 ## Feito
 
@@ -92,26 +79,8 @@ Testes: `domain/model/` (domínio), `application/service/` (casos de uso com fak
 - Logs: `DEBUG` na entrada do service, `INFO` depois do `save`; recusas logadas uma vez no handler (`WARN`), não com try/catch nos services. SLF4J no core é aceito (fachada, não framework).
 - Testes do controller mockam os use cases e forçam as exceções com `willThrow`: testam só a tradução para HTTP. A regra em si é testada no domínio (ex.: overlap no `SectorTest`); o fluxo ponta a ponta fica para um teste de integração.
 - **Virtual threads, não coroutines** (ADR 0002): JDBC é bloqueante, então `suspend` não traria ganho. Java 25 para evitar *pinning* em `synchronized`. Pool do Hikari fica em 10 até medir no passo 3.
+- **Lote não vende depois do início do evento** (decidido em 2026-11-11): `lot.endsAt <= event.startsAt`. Issue #10. Onde mora a regra (`Event` ou `Sector`) é decisão sua: pense em quem conhece o `startsAt`. Não dá para virar `CHECK` no banco (envolve duas tabelas), então não precisa de V2 só por ela.
 - **Fluxo de branches:** `feat/...` / `chore/...` → PR para a `develop` (pipeline só de testes) → `main` só quando o passo estiver pronto.
-
-## Próximos passos
-
-1. **PR #3** `feat/catalog` -> `develop` com o check `Test` verde e merge.
-2. **`develop` -> `main`** para fechar o passo 2 (o `ci.yml` roda o build completo).
-3. **Passo 3:** reserva com estoque e teste de concorrência. Começar pelos pontos de atenção abaixo (transação do use case, `@Version`).
-
-## Pontos de atenção para depois
-
-- **Transação do caso de uso:** cada service faz `findById` e `save` em transações separadas (cada método do adapter tem a sua). Dois usuários editando o mesmo evento ao mesmo tempo podem sobrescrever um ao outro. Resolver no passo 3 (concorrência): `@Transactional` no use case e/ou versionamento otimista (`@Version`).
-- **ID atribuído + Spring Data:** `save` faz `SELECT` antes do `INSERT` (merge). Otimizável com `Persistable` se virar problema.
-- **Handler global:** `CatalogExceptionHandler` vale para todos os controllers. Quando surgirem outros módulos, mover validação/JSON/500 para um handler compartilhado.
-- **`TicketRushApplicationTests`** grava no banco e não limpa. Ok por enquanto (ids novos a cada execução).
-- **Fake guarda a mesma instância:** testes de service podem passar sem `save`; quem pega isso é o teste de persistência / ponta a ponta.
-
-## Perguntas em aberto
-
-1. Faz sentido aceitar um lote cuja venda termina **depois** do `startsAt` do evento? Se não, a regra fica no `Event` ou no `Sector`?
-2. "Pista" e "pista" devem ser considerados o mesmo nome de setor?
 
 ## Conceitos vistos nesta etapa
 
