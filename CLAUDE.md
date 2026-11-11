@@ -35,7 +35,8 @@ Kotlin on the backend, Gradle, hexagonal architecture (he doesn't understand it 
 
 ## Conventions
 
-- `main` is protected. All work happens in branches (`feat/...`, `chore/...`, `fix/...`) and lands through a PR with green CI.
+- All work happens in branches (`feat/...`, `chore/...`, `fix/...`) and lands in `develop` through a PR with green tests (a pipeline that runs only the tests).
+- `main` is protected and only receives `develop` when a roadmap step is ready.
 - Conventional Commits (`feat:`, `fix:`, `chore:`, `refactor:`, `test:`, `docs:`).
 - Architecture decisions become ADRs in `docs/adr/NNNN-title.md`.
 - Money always in cents (`Long`), timestamps in UTC.
