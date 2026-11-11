@@ -11,13 +11,14 @@ Passo 2 – Catálogo
  ✅ Adapter web (controller, DTOs, mapper, exception handler, Swagger)
  ✅ Logs nos services (SLF4J)
  ✅ Testes do adapter web (@WebMvcTest)
- ✅ Virtual threads + Java 25 (ADR 0002, PR #2 aberto contra a main)
- ⬜ Branch develop + pipeline só de testes   ← começar por aqui
- ⬜ ADR 0001
- ⬜ PR feat/catalog → develop
+ ✅ Virtual threads + Java 25 (ADR 0002, PR #2 → develop)
+ ✅ Branch develop + pipeline só de testes (tests.yml)
+ ✅ ADR 0001 (hexagonal no catálogo)
+ ⬜ PR #3 feat/catalog → develop   ← começar por aqui
+ ⬜ develop → main (fecha o passo 2)
 ```
 
-87 testes verdes (`./gradlew test`). A `feat/catalog` já tem o merge local da `chore/virtual-threads-java-25` e ainda não foi enviada ao GitHub.
+87 testes verdes (`./gradlew test`). PR #3 aberto contra a `develop`.
 
 ## Feito
 
@@ -95,13 +96,9 @@ Testes: `domain/model/` (domínio), `application/service/` (casos de uso com fak
 
 ## Próximos passos
 
-1. **Branch `develop` + pipeline só de testes.**
-   - Publicar a `develop` no GitHub (hoje ela só existe localmente, igual à `main`).
-   - Workflow que roda `./gradlew test` em PR e push para a `develop`. O workflow atual (`ci.yml`, `./gradlew build`) continua para a `main`.
-   - Proteger a `develop` com o check de testes obrigatório.
-   - Trocar a base do PR #2 (`chore/virtual-threads-java-25`) de `main` para `develop`.
-2. **ADR `docs/adr/0001-hexagonal-catalog.md`** — por que hexagonal no catálogo, comparando com o layered do Caraíva. Incluir a decisão do `restore`.
-3. **PR** `feat/catalog` -> `develop` com os testes verdes. Para a `main` só quando o passo 2 estiver fechado.
+1. **PR #3** `feat/catalog` -> `develop` com o check `Test` verde e merge.
+2. **`develop` -> `main`** para fechar o passo 2 (o `ci.yml` roda o build completo).
+3. **Passo 3:** reserva com estoque e teste de concorrência. Começar pelos pontos de atenção abaixo (transação do use case, `@Version`).
 
 ## Pontos de atenção para depois
 
