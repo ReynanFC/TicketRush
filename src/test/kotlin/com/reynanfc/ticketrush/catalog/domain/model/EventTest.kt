@@ -5,6 +5,7 @@ import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateLotSortOrderExc
 import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateSectorNameException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventHasNoSectorsException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventNotInDraftException
+import com.reynanfc.ticketrush.catalog.domain.exception.LotEndsTooLateException
 import com.reynanfc.ticketrush.catalog.domain.exception.SectorHasNoLotsException
 import com.reynanfc.ticketrush.catalog.domain.exception.SectorNotFoundException
 import com.reynanfc.ticketrush.catalog.fixtures.EventFixtures.EVENT_STARTS_AT
@@ -14,13 +15,25 @@ import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.LOT_ENDS_AT
 import com.reynanfc.ticketrush.catalog.fixtures.LotFixtures.aLot
 import com.reynanfc.ticketrush.catalog.fixtures.SectorFixtures.aSector
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 class EventTest {
-
+    companion object {
+        @JvmStatic
+        fun invalidEndsAtProvider() = listOf(
+            EVENT_STARTS_AT,
+            EVENT_STARTS_AT.plusSeconds(1),
+            EVENT_STARTS_AT.plus(2, ChronoUnit.HOURS),
+        )
+    }
     @Nested
     inner class Creation {
 
@@ -159,6 +172,36 @@ class EventTest {
 
             assertEquals(listOf(lot), camarote.lots)
             assertEquals(emptyList(), pista.lots)
+        }
+
+        // The provider lives in the outer companion: an inner class cannot have one,
+        // and JUnit only looks in the nested class when the name is not fully qualified.
+        @ParameterizedTest
+        @MethodSource("com.reynanfc.ticketrush.catalog.domain.model.EventTest#invalidEndsAtProvider")
+        fun `should reject a lot that ends at or after the event starts`(invalidEndsAt: Instant) {
+            val sector = aSector()
+            val lot = aLot(name = "VIP", endsAt = invalidEndsAt)
+            val event = anEvent(startsAt = EVENT_STARTS_AT).apply { addSector(sector) }
+
+            val error = assertFailsWith<LotEndsTooLateException> {
+                event.addLot(sector.id, lot)
+            }
+
+            assertEquals("VIP", error.lotName)
+            assertEquals(invalidEndsAt, error.lotEndsAt)
+            assertEquals(EVENT_STARTS_AT, error.eventStartsAt)
+            assertTrue(sector.lots.isEmpty())
+        }
+
+        @Test
+        fun `should accept a lot that ends right before the event starts`() {
+            val sector = aSector()
+            val lot = aLot(endsAt = EVENT_STARTS_AT.minusSeconds(1))
+            val event = anEvent(startsAt = EVENT_STARTS_AT).apply { addSector(sector) }
+
+            event.addLot(sector.id, lot)
+
+            assertEquals(listOf(lot), sector.lots)
         }
 
         @Test

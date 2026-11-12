@@ -9,6 +9,7 @@ import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateSectorNameExcep
 import com.reynanfc.ticketrush.catalog.domain.exception.EventHasNoSectorsException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventNotFoundException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventNotInDraftException
+import com.reynanfc.ticketrush.catalog.domain.exception.LotEndsTooLateException
 import com.reynanfc.ticketrush.catalog.domain.exception.OverlappingLotWindowException
 import com.reynanfc.ticketrush.catalog.domain.exception.SectorHasNoLotsException
 import com.reynanfc.ticketrush.catalog.domain.exception.SectorNotFoundException
@@ -38,6 +39,7 @@ class CatalogExceptionHandler {
             is EventNotFoundException,
             is SectorNotFoundException -> HttpStatus.NOT_FOUND
             is DuplicateSectorNameException,
+            is LotEndsTooLateException,
             is DuplicateLotSortOrderException,
             is OverlappingLotWindowException,
             is EventNotInDraftException,

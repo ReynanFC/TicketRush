@@ -79,7 +79,7 @@ Testes: `domain/model/` (domínio), `application/service/` (casos de uso com fak
 - Logs: `DEBUG` na entrada do service, `INFO` depois do `save`; recusas logadas uma vez no handler (`WARN`), não com try/catch nos services. SLF4J no core é aceito (fachada, não framework).
 - Testes do controller mockam os use cases e forçam as exceções com `willThrow`: testam só a tradução para HTTP. A regra em si é testada no domínio (ex.: overlap no `SectorTest`); o fluxo ponta a ponta fica para um teste de integração.
 - **Virtual threads, não coroutines** (ADR 0002): JDBC é bloqueante, então `suspend` não traria ganho. Java 25 para evitar *pinning* em `synchronized`. Pool do Hikari fica em 10 até medir no passo 3.
-- **Lote não vende depois do início do evento** (decidido em 2026-11-11): `lot.endsAt <= event.startsAt`. Issue #10. Onde mora a regra (`Event` ou `Sector`) é decisão sua: pense em quem conhece o `startsAt`. Não dá para virar `CHECK` no banco (envolve duas tabelas), então não precisa de V2 só por ela.
+- **Lote termina antes do início do evento** (decidido em 2026-11-11, issue #10): `lot.endsAt < event.startsAt`, igualdade recusada. A conta fica no `Event.addLot` (só ele conhece o `startsAt`), lançando `LotEndsTooLateException` (422). Não vira `CHECK` no banco (envolve duas tabelas).
 - **Fluxo de branches:** `feat/...` / `chore/...` → PR para a `develop` (pipeline só de testes) → `main` só quando o passo estiver pronto.
 
 ## Conceitos vistos nesta etapa

@@ -9,6 +9,7 @@ import com.reynanfc.ticketrush.catalog.application.port.`in`.usecase.PublishEven
 import com.reynanfc.ticketrush.catalog.domain.exception.DuplicateSectorNameException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventHasNoSectorsException
 import com.reynanfc.ticketrush.catalog.domain.exception.EventNotFoundException
+import com.reynanfc.ticketrush.catalog.domain.exception.LotEndsTooLateException
 import com.reynanfc.ticketrush.catalog.domain.exception.OverlappingLotWindowException
 import com.reynanfc.ticketrush.catalog.domain.exception.SectorNotFoundException
 import com.reynanfc.ticketrush.catalog.fixtures.AddLotCommandFixtures.anAddLotCommand
@@ -309,6 +310,25 @@ class EventControllerTest {
                     }
 
                 then(addLotUseCase).should().addLot(expectedCommand)
+            }
+
+            @Test
+            fun `should return 422 when adding a lot that ends after the event starts`() {
+                val request = anAddLotRequest()
+                val eventId = UUID.randomUUID()
+                val sectorId = UUID.randomUUID()
+
+                given(addLotUseCase.addLot(commandFor(eventId, sectorId, request)))
+                    .willThrow(LotEndsTooLateException("VIP", request.endsAt, Instant.parse("2030-03-20T23:00:00Z")))
+
+                mockMvc.post("/events/{eventId}/sectors/{sectorId}/lots", eventId, sectorId) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = jsonMapper.writeValueAsString(request)
+                }.andExpect {
+                    status { isUnprocessableContent() }
+                    jsonPath("$.status") { value(422) }
+                    jsonPath("$.message") { value("Lot 'VIP' must end before the event starts at 2030-03-20T23:00:00Z, but ends at ${request.endsAt}") }
+                }
             }
 
             @Test
