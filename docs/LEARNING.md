@@ -105,3 +105,22 @@ Sessão de 2026-11-10:
 - Cada camada de teste responde uma pergunta: domínio (regra), service (orquestração), controller (tradução HTTP), integração (tudo junto).
 - Virtual threads × coroutines, *pinning*, pool de conexões (HikariCP) e por que pool maior não é mais rápido.
 - Concorrência: coroutines/threads **geram** concorrência (testes); o banco (locks, update condicional) **protege** a regra.
+
+# Passo 3 — Reserva
+
+### Decisões tomadas
+
+- **Módulo `inventory/` separado** (ADR 0003, issue #11). Referência ao lote só por `lotId`; o `LotStock` guarda a própria cópia (`total`, `available`). Sem imports entre os domínios.
+- **O estoque nasce no `publish()`**: antes nada está à venda, depois os lotes estão congelados (`ensureDraft`).
+- **Comunicação por evento de integração do Spring**, via porta de saída no catalog (o core não conhece o Spring). Listener `@EventListener` síncrono, na mesma transação. O #18 (transação no use case) virou pré-requisito.
+
+## Conceitos vistos nesta etapa
+
+Sessão de 2026-11-12:
+- **Bounded context:** o mesmo assunto ("lote") com modelos diferentes por contexto. Catálogo = vitrine (o que está à venda); inventory = contador disputado (quantos restam).
+- **Tamanho do aggregate:** o menor conjunto que precisa ficar consistente junto. Estoque dentro do `Event` = lock no evento inteiro (um caixa para o estádio todo).
+- **Lost update:** dois leem o mesmo valor, os dois checam, os dois gravam; o segundo apaga o primeiro sem perceber. "Checar e decrementar" precisa ser uma operação atômica.
+- Estratégias contra lost update (comparação no #16): UPDATE condicional (`WHERE available >= qty` + linhas afetadas), lock otimista (`@Version`), lock pessimista (`SELECT ... FOR UPDATE`).
+- **Evento de integração × domínio:** o contrato entre módulos leva só dados simples; nunca as classes do domínio.
+- `@EventListener` (síncrono, mesma transação, falha = rollback de tudo) × `@TransactionalEventListener` (`AFTER_COMMIT`: falha deixa inconsistência; sem transação ativa o listener nem é chamado).
+- **Por que a mensageria só no passo 5:** no monólito, uma transação já garante tudo ou nada. RabbitMQ entra quando essa garantia some (outbox no passo 5, saga no passo 6). A porta criada agora troca só de adapter.
