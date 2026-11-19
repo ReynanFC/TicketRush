@@ -6,6 +6,7 @@ import com.reynanfc.ticketrush.inventory.application.port.out.LotStockRepository
 import com.reynanfc.ticketrush.inventory.domain.model.LotStock
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
@@ -24,6 +25,12 @@ class JpaLotStockRepository(
     @Transactional(readOnly = true)
     override fun findByLotId(lotId: UUID): LotStock? {
         return springDataRepository.findByIdOrNull(lotId)
+            ?.let(InventoryPersistenceMapper::toDomain)
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    override fun findByLotIdForReservation(lotId: UUID): LotStock? {
+        return springDataRepository.findByIdWithLock(lotId)
             ?.let(InventoryPersistenceMapper::toDomain)
     }
 }

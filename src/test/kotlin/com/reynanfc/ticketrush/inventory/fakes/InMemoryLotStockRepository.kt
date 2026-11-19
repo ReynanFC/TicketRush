@@ -16,5 +16,8 @@ class InMemoryLotStockRepository : LotStockRepository {
 
     override fun findByLotId(lotId: UUID): LotStock? = stocks[lotId]?.copy()
 
+    override fun findByLotIdForReservation(lotId: UUID): LotStock? = stocks[lotId]?.copy()
+
+
     private fun LotStock.copy() = LotStock.restore(lotId, sectorId, total, available)
 }

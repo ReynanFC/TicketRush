@@ -7,4 +7,5 @@ interface LotStockRepository {
 
     fun save(stock: LotStock)
     fun findByLotId(lotId: UUID): LotStock?
+    fun findByLotIdForReservation(lotId: UUID): LotStock?
 }

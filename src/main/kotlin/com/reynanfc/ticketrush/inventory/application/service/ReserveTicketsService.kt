@@ -11,8 +11,8 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 
-// Read-modify-write on purpose: under concurrency two requests can read the same `available`
-// and both succeed. The concurrency test (#15) exposes it and the lock strategy (#16) fixes it.
+// Read-modify-write made safe by a pessimistic lock: findByLotIdForReservation locks the stock row
+// until the transaction ends, so concurrent reservations for the same lot run one at a time (#15, #16).
 class ReserveTicketsService(
     private val lotStockRepository: LotStockRepository,
     private val reservationRepository: ReservationRepository,
@@ -25,7 +25,7 @@ class ReserveTicketsService(
             command.orderId, command.lotId, command.quantity,
         )
 
-        val stock = lotStockRepository.findByLotId(command.lotId)
+        val stock = lotStockRepository.findByLotIdForReservation(command.lotId)
             ?: throw LotStockNotFoundException(command.lotId)
 
         val expiresAt = Instant.now(clock).plus(RESERVATION_TTL)
