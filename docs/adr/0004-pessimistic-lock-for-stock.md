@@ -23,6 +23,11 @@ muitos compradores disputam o mesmo lote ao mesmo tempo.
 - A porta `LotStockRepository` ganha `findByLotIdForReservation`. O nome fala da intenção, não do lock, então o core não
   sabe que existe `FOR UPDATE`.
 - O adapter usa um método do Spring Data com `@Lock(LockModeType.PESSIMISTIC_WRITE)` e `@Query`.
+- **Timeout de 3 s** (`jakarta.persistence.lock.timeout` via `@QueryHints`). Quem não consegue o lock nesse tempo recebe
+  `CannotAcquireLockException`, em vez de esperar para sempre atrás de uma transação travada.
+- **`Propagation.MANDATORY`** no `findByLotIdForReservation`. O lock só vale até o fim da transação, então o método
+  exige uma transação já aberta (a do decorator). Chamado fora dela, falha com `IllegalTransactionStateException`, em
+  vez de pegar um lock que sumiria no fim do próprio `find`.
 - O lock vale até o fim da transação do caso de uso. Quem chega depois espera e lê o `available` já atualizado.
 - A regra "não vender mais do que o estoque" continua no domínio, no `LotStock.reserve()`.
 
@@ -72,10 +77,9 @@ lock.
 - **Cada comprador na fila segura uma conexão do pool.** As virtual threads ([ADR 0002](0002-virtual-threads-instead-of-coroutines.md))
   não ajudam aqui: a thread espera barata, mas a conexão JDBC continua presa. Com o Hikari em 10 conexões, um lote
   muito disputado pode deixar o resto da aplicação sem conexão. Medir antes de mexer no pool.
-- **Sem timeout, uma transação travada trava a fila inteira.** Pendente: `jakarta.persistence.lock.timeout`.
-- **O lock só protege se houver uma transação aberta antes do `find`.** Hoje o decorator garante isso. Se o método for
-  chamado fora dele, o `@Transactional` do adapter abre uma transação que termina no próprio `find`, e o lock some sem
-  aviso. Pendente: `Propagation.MANDATORY` no adapter.
+- **Sob pico, alguns compradores recebem erro por timeout** mesmo com ingresso sobrando, se a fila passar de 3 s. Hoje
+  essa `CannotAcquireLockException` não tem tratamento; o adapter web (#17) precisa traduzi-la (por exemplo, 503 com
+  "tente de novo").
 - **Risco de deadlock** se um dia uma reserva travar mais de um lote. Nesse caso, travar sempre na mesma ordem (por
   `lotId`).
 
